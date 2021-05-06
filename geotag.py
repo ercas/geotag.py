@@ -264,14 +264,20 @@ if __name__ == "__main__":
             .format(subset_columns, args.input)
         )
         df = pandas.read_csv(args.input, usecols=subset_columns)
+    elif args.rownames_only:
+        required_columns = [args.longitude, args.latitude]
+        display(
+            "Reading input file (subsetting to {} as per -r/--rownames-only): {}"
+                .format(required_columns, args.input)
+        )
+        df = pandas.read_csv(args.input, usecols=required_columns)
     else:
         display("Reading input file: {}".format(args.input))
         df = pandas.read_csv(args.input)
 
     if args.rownames_only:
-        display("Generating rownames and dropping other columns")
+        display("Generating rownames")
         df["rowname"] = df.index.astype(str)
-        df = df[["rowname", args.longitude, args.latitude]]
 
     # check for overwriting of existing columns
     overwritten = set(df.columns).intersection(set(output_columns))
