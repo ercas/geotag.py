@@ -242,9 +242,21 @@ if __name__ == "__main__":
         display("Reading input file: {}".format(args.input))
         df = pandas.read_csv(args.input)
 
+    # drop null coordinates
+    n_original_rows = len(df)
+    df = df.dropna(subset=[args.longitude, args.latitude])
+    n_dropped_rows = n_original_rows - len(df)
+    display(
+        "Dropped {}/{} columns with missing coordinates ({:0.2f}%)".format(
+            n_dropped_rows, n_original_rows, n_dropped_rows/n_original_rows*100
+        )
+    )
+
+    # generate rownames
     if args.rownames_only:
         display("Generating rownames")
         df["rowname"] = df.index.astype(str)
+
 
     # check for overwriting of existing columns
     overwritten = set(df.columns).intersection(set(output_columns))
