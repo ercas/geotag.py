@@ -121,41 +121,8 @@ def dummy_function(*_, **__) -> None:
 
 
 if __name__ == "__main__":
-    """
-    df_parcels = pandas.read_csv("maparcels_wgs.csv")
-
-    for source_shp, source_column, dest_column in tqdm.tqdm(
-            [
-                ("zip://tl_2019_25_bg.zip", "GEOID", "bg_geoid_2019"),
-                ("zip://tl_2019_25_tract.zip", "GEOID", "tract_geoid_2019"),
-                ("zip://tl_2019_25_puma10.zip", "PUMACE10", "puma_code_2019"),
-                ("zip://tl_2019_us_zcta510.zip", "ZCTA5CE10", "zcta_code_2019"),
-            ],
-            desc="geotagging"
-        ):
-        tqdm.tqdm.write("loading geometries from {}".format(source_shp))
-        tagger = Geotagger(geopandas.read_file(source_shp), source_column)
-        tqdm.tqdm.write("geotagging with {} -> {}".format(source_column, dest_column))
-        df_parcels[dest_column] = df_parcels[["lon", "lat"]].progress_apply(
-            lambda xy: tagger.lookup(*xy),
-            axis=1
-        )
-
-    df_parcels.to_csv("maparcels_wgs_geotagged.csv", index=False)
-    """
-
     import argparse
     import copy
-
-    """
-    python3 geotag.py
-        --input input.csv \
-        --longitude lon
-        --latitude lat
-        --rownames-only
-        --output output.csv
-        tl_2019_us_zcta510.shp$GEOID10>geoid_zcta
-    """
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
