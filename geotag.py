@@ -279,9 +279,12 @@ if __name__ == "__main__":
 
         if "*" in geotag_input.input_file:
             display("Detected glob pattern (\"*\"); reading multiple inputs")
+            paths = glob.glob(geotag_input.input_file)
             parts = []
-            for input_file in glob.glob(geotag_input.input_file):
-                display("Reading: {}".format(input_file))
+            for i, input_file in enumerate(paths):
+                display(
+                    "Reading part {}/{}: {}".format(i + 1, len(paths), input_file)
+                )
                 parts.append(geopandas.read_file(input_file))
             display("Merging {} GeoDataFrames".format(len(parts)))
             gdf = geopandas.GeoDataFrame(pandas.concat(parts))
