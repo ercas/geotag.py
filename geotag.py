@@ -151,7 +151,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-r", "--rownames-only", action="store_true", default=False,
-        help="Optional. Mutually exclusive with -s/--subset. Creates a new column containing the data frame rownames and drops all other columns from the input."
+        help="Optional. Mutually exclusive with -s/--subset. Creates a new column containing the data frame rownames and drops all other columns from the input. Rownames will be R-style, starting at 1, rather than pandas-style, starting at 0."
     )
     parser.add_argument(
         "-f", "--force-overwrite", action="store_true", default=False,
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     # generate rownames
     if args.rownames_only:
         display("Generating rownames")
-        df["rowname"] = df.index.astype(str)
+        df["rowname"] = pandas.Series(df.index).apply(lambda rowname: str(rowname + 1)).astype(str)
 
 
     # check for overwriting of existing columns
@@ -277,11 +277,27 @@ if __name__ == "__main__":
         )
 
         display("Reading: {}".format(geotag_input.input_file))
-        tagger = Geotagger(
-            geopandas.read_file(geotag_input.input_file),
-            geotag_input.input_column,
-            verbose=args.verbose
+        gdf = geopandas.read_file(geotag_input.input_file)
+
+        display("Checking validity of geometries")
+        gdf["_invalid_geometry"] = gdf.geometry.progress_apply(
+            lambda geometry: not geometry.is_valid
         )
+
+        if gdf["_invalid_geometry"].any():
+            display(
+                "Correcting {} invalid geometries via geometry.buffer(0)"
+                .format(sum(gdf["_invalid_geometry"]))
+            )
+            gdf.geometry = gdf.progress_apply(
+                lambda row:
+                    row.geometry.buffer(0)
+                    if row["_invalid_geometry"]
+                    else row.geometry,
+                axis=1
+            )
+
+        tagger = Geotagger(gdf, geotag_input.input_column, verbose=args.verbose)
 
         display(
             "Geotagging: creating column \"{}\" <- {}${}"
