@@ -122,12 +122,13 @@ def dummy_function(*_, **__) -> None:
 
 if __name__ == "__main__":
     import argparse
+    import glob
     import copy
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "geotag", nargs="+",
-        help="A list of geotag operation instructions. These should be in the format \"input_file$input_column>output_column\". This is passed directly into geopandas.read_file(). To directly read compressed shapefile archives, use \"zip://path/to/shapefile.zip\". NOTE: Be careful about bash! Be sure to enclose in single quotes (lack of quotes will register \">\" as an output redirect; double quotes will still register \"$\" as a variable prefix."
+        help="A list of geotag operation instructions. These should be in the format \"input_file$input_column>output_column\". This is passed directly into geopandas.read_file(). To directly read compressed shapefile archives, use \"zip://path/to/shapefile.zip\". NOTE: Be careful about bash! Be sure to enclose in single quotes (lack of quotes will register \">\" as an output redirect; double quotes will still register \"$\" as a variable prefix. Globs are also supported, e.g. \"tl_2020*bg.shp$GEOID>geoid_bg\", but all globbed inputs should have the same fields."
     )
     parser.add_argument(
         "-i", "--input", required=True,
@@ -276,8 +277,17 @@ if __name__ == "__main__":
             )
         )
 
-        display("Reading: {}".format(geotag_input.input_file))
-        gdf = geopandas.read_file(geotag_input.input_file)
+        if "*" in geotag_input.input_file:
+            display("Detected glob pattern (\"*\"); reading multiple inputs")
+            parts = []
+            for input_file in glob.glob(geotag_input.input_file):
+                display("Reading: {}".format(input_file))
+                parts.append(geopandas.read_file(input_file))
+            display("Merging {} GeoDataFrames".format(len(parts)))
+            gdf = geopandas.GeoDataFrame(pandas.concat(parts))
+        else:
+            display("Reading: {}".format(geotag_input.input_file))
+            gdf = geopandas.read_file(geotag_input.input_file)
 
         display("Checking validity of geometries")
         gdf["_invalid_geometry"] = gdf.geometry.progress_apply(
